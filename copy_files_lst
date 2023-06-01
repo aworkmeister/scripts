@@ -102,6 +102,7 @@ do
 		  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
 		  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii
       		  cp -p "$flair_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
+		  continue
     	  fi
   fi
   cd "$copy_dir"
