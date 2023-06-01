@@ -93,7 +93,7 @@ do
 		  error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
 		  cd "$copy_dir" ; rm -r "$id"
 		  continue
-    flair_in_T1_nifti=$(ls "$session_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
+    	  flair_in_T1_nifti=$(ls "$session_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
 	  if [[ -z "$flair_in_T1_nifti" ]]; then
 		  error "No FLAIR in T1 space NIFTI downloaded for session "$session" id "$id"\n"
 		  cd "$copy_dir" ; rm -r "$id"
