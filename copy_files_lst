@@ -101,49 +101,10 @@ do
 	  else
 		  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
 		  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii
-      cp -p "$flair_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
+      		  cp -p "$flair_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
 	  fi
-    fi
-    fi
-  fi
-  ################
-  ###### LST ######
-  ################
-  session_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/ -maxdepth 2 -mindepth 1 -type d -iname "$session")
-  if [[ -z "$session_folder" ]]; then
-	error ""$project"/PROCESSED...LST/"$session" folder does not exist\n"
-        cd "$copy_dir" ; rm -r "$session"
-        continue
-  else
-  	echo "Session folder: "$session_folder""
-	flair_nifti=$(ls "$session_folder"/"$id"_"$session"_"$epoch"_flair.nii)
-	if [[ -z "$flair_nifti" ]]; then
-		error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
-		cd "$copy_dir" ; rm -r "$id"
-		continue
-	else
-		cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
-	fi
-  fi
-   ################
-  ###### FLAIR ######
-  ################
-  session_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/ -maxdepth 2 -mindepth 1 -type d -iname "$session")
-  if [[ -z "$session_folder" ]]; then
-	error ""$project"/RAW...FLAIR/"$session" folder does not exist\n"
-        cd "$copy_dir" ; rm -r "$session"
-        continue
-  else
-  	echo "Session folder: "$session_folder""
-	flair_nifti=$(ls "$session_folder"/*FLAIR*/NIFTI/*.nii.gz)
-	if [[ -z "$t1_nifti" ]]; then
-		error "No FLAIR NIFTI downloaded for "$session"\n"
-		cd "$copy_dir" ; rm -r "$session"
-		continue
-	else
-		cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
-		gunzip $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
-	fi
+    	  fi
+    	  fi
   fi
   cd "$copy_dir"
 done
