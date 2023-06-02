@@ -69,31 +69,31 @@ do
   fi
 
   # Make a folder for each map_id
-  mkdir -p "$id"
+  cd "$copy_dir" ; mkdir -p "$id"
   cd "$id"
   printf "===========\n"
   printf "ID: $id , SESSION: $session\n"
   ################
   ###### LST ######
   ################
-  session_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/edits/ -maxdepth 2 -mindepth 1 -type d -iname "$session")
-  if [[ -z "$session_folder" ]]; then
-	  error ""$project"/PROCESSED...LST/"$session" folder does not exist\n"
-    cd "$copy_dir" ; rm -r "$id"
-    continue
+  edits_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/"$session"/edits -maxdepth 2 -mindepth 1 -type d -iname "edits")
+  if [[ -z "$edits_folder" ]]; then
+	  error ""$project"/PROCESSED...LST/"$session"/edits folder does not exist\n"
+    	  cd "$copy_dir" ; rm -r "$id"
+    	  continue
   else
-  	echo "Session folder: "$session_folder""
-	  lesion_mask=$(ls "$session_folder"/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii)
+  	echo "Edits folder: "$edits_folder""
+	  lesion_mask=$(ls "$edits_folder"/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii)
 	  if [[ -z "$lesion_mask" ]]; then
 		  error "No LESION MASK downloaded for session "$session" id "$id"\n"
 		  cd "$copy_dir" ; rm -r "$id"
 		  continue
-	  flair_nifti=$(ls "$session_folder"/"$id"_"$session"_"$epoch"_flair.nii)
+	  flair_nifti=$(ls "$edits_folder"/"$id"_"$session"_"$epoch"_flair.nii)
 	  elif [[ -z "$flair_nifti" ]]; then
 		  error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
 		  cd "$copy_dir" ; rm -r "$id"
 		  continue
-    	  flair_in_T1_nifti=$(ls "$session_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
+    	  flair_in_T1_nifti=$(ls "$edits_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
 	  elif [[ -z "$flair_in_T1_nifti" ]]; then
 		  error "No FLAIR in T1 space NIFTI downloaded for session "$session" id "$id"\n"
 		  cd "$copy_dir" ; rm -r "$id"
@@ -102,7 +102,6 @@ do
 		  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
 		  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii
       		  cp -p "$flair_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
-		  continue
     	  fi
   fi
   cd "$copy_dir"
