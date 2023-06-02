@@ -76,7 +76,7 @@ do
   ################
   ###### LST ######
   ################
-  session_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/edits -maxdepth 2 -mindepth 1 -type d -iname "$session")
+  session_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/edits/ -maxdepth 2 -mindepth 1 -type d -iname "$session")
   if [[ -z "$session_folder" ]]; then
 	  error ""$project"/PROCESSED...LST/"$session" folder does not exist\n"
     cd "$copy_dir" ; rm -r "$id"
