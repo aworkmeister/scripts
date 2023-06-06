@@ -32,20 +32,14 @@ if [[ -f $argument ]]; then
   hash_list=$argument
 else
   echo "Input is not a hashlist"
-  echo "$PWD"
   # Generate a sub list from the main epoch hashlist using the sessions provided
   main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"$project"*ScansAcquired*.csv")
   head -n 1 "$main_list" > subset.csv
   for i in $argument
-  do
-    match=$(cat $main_list | grep -e "$i")
-    if [[ -z "$match" ]] ; then
-      error ""$i" not in Scans Acquired hashlist\n"
-    else
-       echo "$match" >> subset.csv
-    fi
+    do
+    cat $main_list | grep -e "$i" >> subset.csv # Grepping for session id 
     done
-    hash_list=$PWD/subset.csv
+    hashlist=./subset.csv
 fi
 
 # Find out column numbers for sessions map_ids and epoch.
