@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# Define a function to differentiate error messages from print statements. Error posted to stdout and$
+error() {
+  printf "$@" ;
+  printf "Error: $@" 1>&2 ;
+}
+
+# Assign variables to tags
+while getopts ":d:i:p:" opt; do
+  case $opt in
+    d)
+      copy_dir=$OPTARG
+      cd "$copy_dir"
+      ;;
+    i)
+      argument=$OPTARG
+      ;;
+    p)
+      project=$OPTARG
+      ;;
+  esac
+done
+# Make sure project is something we recognize
+if [[ "$project" != 'TAP' && "$project" != "MAP" ]]; then
+    error "Unrecognized project name "$project" - Use either MAP or TAP\n"
+fi
+
+
+# Check if the argument is a hash_list or a list of sessions
+if [[ -f $argument ]]; then
+  echo "Input is a hashlist" ;
+  hash_list=$argument
+else
+  echo "Input is not a hashlist"
+  echo "$PWD"
+  # Generate a sub list from the main epoch hashlist using the sessions provided
+  main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"$project"*ScansAcquired$
+  head -n 1 "$main_list" > subset.csv
+  for i in $argument
+    do
+    cat $main_list | grep -e "$i" >> subset.csv #grepping for session id
+    done
+    hash_list=./subset.csv
+fi
+
+# Find out column numbers for sessions map_ids and epoch.
+sess_col=$(awk -v RS=',' '/session_id/{print NR; exit}' $hash_list)
+epoch_col=$(awk -v RS=',' '/epoch/{print NR; exit}' $hash_list)
+if [[ $project == 'MAP' ]]; then
+    id_col=$(awk -v RS=',' '/map_id/{print NR; exit}' $hash_list)
+elif [[ $project == 'TAP' ]]; then
+    id_col=$(awk -v RS=',' '/vmac_id/{print NR; exit}' $hash_list)
+fi
+
+# Read a hash list from the second line (ignore header)
+# Read the hash list from the second line (ignore header)
+tail -n +2 $hash_list | while read line
+do
+  id=$(echo $line | awk -v m="$id_col" -F ',' '{print $m}')
+  session=$(echo "$line" | awk -v s="$sess_col" -F ',' '{print $s}')
+  epoch=$(echo "$line" | awk -v e="$epoch_col" -F ',' '{print $e}')
+  if [[ "$epoch" -eq "0" ]] ; then
+    epoch="BH"
+  fi
+
+  # Make a folder for each map_id
+  cd "$copy_dir" ; mkdir -p "$id"/
+  cd "$id"
+  printf "===========\n"
+  printf "ID: $id , SESSION: $session\n"
+  ################
+  ###### LST ######
+  ################
+  edits_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/"$session"/ -maxdepth 2$
+  if [[ -z "$edits_folder" ]]; then
+          error ""$project"/PROCESSED...LST/"$session"/edits folder does not exist\n"
+          cd "$copy_dir" ; rm -r "$id"
+          continue
+  else
+          echo "Edits folder: "$edits_folder""
+          lesion_mask=$(ls "$edits_folder"/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.ni$
+          if [[ -z "$lesion_mask" ]]; then
+                  error "No LESION MASK downloaded for session "$session" id "$id"\n"
+                  cd "$copy_dir" ; rm -r "$id"
+                  continue
+          else
+                  echo "Lesion map copied"
+                  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.n$
+          fi
+          flair_nifti=$(ls "$edits_folder"/"$id"_"$session"_"$epoch"_flair.nii)
+          if [[ -z "$flair_nifti" ]]; then
+                  error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
+                  cd "$copy_dir" ; rm -r "$id"
+                  continue
+          else
+                  echo "FLAIR nifti copied"
+                  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
+          fi
+          flair_in_T1_nifti=$(ls "$edits_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
+          if [[ -z "$flair_in_T1_nifti" ]]; then
+                  error "No FLAIR in T1 space NIFTI downloaded for session "$session" id "$id"\n"
+                  cd "$copy_dir" ; rm -r "$id"
+                  continue
+          else
+                  echo "FLAIR in T1 nifti copied"
+                  cp -p "$flair_in_T1_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
+          fi
+  fi
+  cd "$copy_dir"
+done
+rm subset.csv
