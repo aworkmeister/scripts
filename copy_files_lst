@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Define a function to differentiate error messages from print statements. Error posted to stdout and$
+# Define a function to differentiate error messages from print statements. Error posted to stdout and stderr.
 error() {
   printf "$@" ;
   printf "Error: $@" 1>&2 ;
@@ -34,13 +34,18 @@ else
   echo "Input is not a hashlist"
   echo "$PWD"
   # Generate a sub list from the main epoch hashlist using the sessions provided
-  main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"$project"*ScansAcquired$
+  main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"$project"*ScansAcquired*.csv")
   head -n 1 "$main_list" > subset.csv
   for i in $argument
-    do
-    cat $main_list | grep -e "$i" >> subset.csv #grepping for session id
+  do
+    match=$(cat $main_list | grep -e "$i")
+    if [[ -z "$match" ]] ; then
+      error ""$i" not in Scans Acquired hashlist\n"
+    else
+       echo "$match" >> subset.csv
+    fi
     done
-    hash_list=./subset.csv
+    hash_list=$PWD/subset.csv
 fi
 
 # Find out column numbers for sessions map_ids and epoch.
@@ -71,40 +76,40 @@ do
   ################
   ###### LST ######
   ################
-  edits_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/"$session"/ -maxdepth 2$
+  edits_folder=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/LST/"$session"/ -maxdepth 2 -mindepth 1 -type d -iname edits)
   if [[ -z "$edits_folder" ]]; then
-          error ""$project"/PROCESSED...LST/"$session"/edits folder does not exist\n"
-          cd "$copy_dir" ; rm -r "$id"
-          continue
+	  error ""$project"/PROCESSED...LST/"$session"/edits folder does not exist\n"
+    	  cd "$copy_dir" ; rm -r "$id"
+    	  continue
   else
-          echo "Edits folder: "$edits_folder""
-          lesion_mask=$(ls "$edits_folder"/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.ni$
-          if [[ -z "$lesion_mask" ]]; then
-                  error "No LESION MASK downloaded for session "$session" id "$id"\n"
-                  cd "$copy_dir" ; rm -r "$id"
-                  continue
-          else
-                  echo "Lesion map copied"
-                  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.n$
-          fi
-          flair_nifti=$(ls "$edits_folder"/"$id"_"$session"_"$epoch"_flair.nii)
-          if [[ -z "$flair_nifti" ]]; then
-                  error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
-                  cd "$copy_dir" ; rm -r "$id"
-                  continue
-          else
-                  echo "FLAIR nifti copied"
-                  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
-          fi
-          flair_in_T1_nifti=$(ls "$edits_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
-          if [[ -z "$flair_in_T1_nifti" ]]; then
-                  error "No FLAIR in T1 space NIFTI downloaded for session "$session" id "$id"\n"
-                  cd "$copy_dir" ; rm -r "$id"
-                  continue
-          else
-                  echo "FLAIR in T1 nifti copied"
-                  cp -p "$flair_in_T1_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
-          fi
+  	  echo "Edits folder: "$edits_folder""
+	  lesion_mask=$(ls "$edits_folder"/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii)
+	  if [[ -z "$lesion_mask" ]]; then
+		  error "No LESION MASK downloaded for session "$session" id "$id"\n"
+		  cd "$copy_dir" ; rm -r "$id"
+		  continue
+	  else 
+	  	  echo "Lesion map copied"
+		  cp -p "$lesion_mask" $PWD/b_000_lesion_lbm0_010_rm"$id"_"$session"_"$epoch"_flair.nii
+	  fi
+	  flair_nifti=$(ls "$edits_folder"/"$id"_"$session"_"$epoch"_flair.nii)
+	  if [[ -z "$flair_nifti" ]]; then
+		  error "No FLAIR NIFTI downloaded for session "$session" id "$id"\n"
+		  cd "$copy_dir" ; rm -r "$id"
+		  continue
+    	  else
+	  	  echo "FLAIR nifti copied"
+		  cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii
+	  fi
+	  flair_in_T1_nifti=$(ls "$edits_folder"/rm"$id"_"$session"_"$epoch"_flair.nii)
+	  if [[ -z "$flair_in_T1_nifti" ]]; then
+		  error "No FLAIR in T1 space NIFTI downloaded for session "$session" id "$id"\n"
+		  cd "$copy_dir" ; rm -r "$id"
+		  continue
+	  else
+      		  echo "FLAIR in T1 nifti copied"
+		  cp -p "$flair_in_T1_nifti" $PWD/rm"$id"_"$session"_"$epoch"_flair.nii
+    	  fi
   fi
   cd "$copy_dir"
 done
