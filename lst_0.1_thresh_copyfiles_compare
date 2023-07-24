@@ -103,9 +103,9 @@ do
         continue
   else
   echo "Session folder: "$session_folder""
-        if [[ os.path.dirname($copy_dir) == */2D/"$session"/"$id" ]]; then 
+        if [[ ($copy_dir) == */2D/"$session"/"$id" ]]; then 
              flair_folder=2DFLAIR
-        elif [[ os.path.dirname($copy_dir) == */3D/"$session"/"$id" ]]; then 
+        elif [[ ($copy_dir) == */3D/"$session"/"$id" ]]; then 
              flair_folder=3DFLAIR
 	flair_nifti=$(ls "$session_folder"/"$flair_folder"/NIFTI/*.nii.gz)
 	if [[ -z "$t1_nifti" ]]; then
