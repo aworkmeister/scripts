@@ -103,11 +103,10 @@ do
         continue
   else
   echo "Session folder: "$session_folder""
-        if [[ ($copy_dir) == */2D/"$session"/"$id" ]]; then 
-             flair_folder=2DFLAIR
-        elif [[ ($copy_dir) == */3D/"$session"/"$id" ]]; then 
-             flair_folder=3DFLAIR
-	flair_nifti=$(ls "$session_folder"/"$flair_folder"/NIFTI/*.nii.gz)
+        if [[ "$copy_dir" == */2D/* ]]; then 
+	     flair_nifti=$(ls "$session_folder"/*2DFLAIR*/NIFTI/*.nii.gz)
+        elif [[ "$copy_dir" == */3D/* ]]; then 
+	     flair_nifti=$(ls "$session_folder"/*3DFLAIR*/NIFTI/*.nii.gz)
 	if [[ -z "$t1_nifti" ]]; then
 		error "No FLAIR NIFTI downloaded for "$session"\n"
 		cd "$copy_dir" ; rm -r "$session"
