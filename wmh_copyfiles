@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# Define a function to differentiate error messages from print statements. Error posted to stdout and stderr. 
+error() {   
+  printf "$@" ; 
+  printf "Error: $@" 1>&2 ; 
+}
+
+
+# Assign variables to tags 
+while getopts ":d:i:p:" opt; do
+  case $opt in
+    d)
+      copy_dir=$OPTARG
+      cd "$copy_dir"
+      ;;
+    i)
+      argument=$OPTARG
+      ;;
+    p)
+      project=$OPTARG
+      ;;
+  esac
+done
+# Make sure project is something we recognize 
+if [[ "$project" != 'TAP' && "$project" != "MAP" ]]; then
+    error "Unrecognized project name "$project" - Use either MAP or TAP\n"
+fi
+
+
+# Check if the argument is a hash_list or a list of sessions
+if [[ -f $argument ]]; then
+  echo "Input is a hashlist" ;
+  hash_list=$argument
+else
+  echo "Input is not a hashlist" 
+  echo "$PWD"
+  # Generate a sub list from the main epoch hashlist using the sessions provided
+  main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"$project"*ScansAcquired*.csv")
+  head -n 1 "$main_list" > subset.csv
+  for i in $argument 
+  do 
+    match=$(cat $main_list | grep -e "$i")
+    if [[ -z "$match" ]] ; then 
+      error ""$i" not in Scans Acquired hashlist\n" 
+    else 
+       echo "$match" >> subset.csv
+    fi
+    done
+    hash_list=$PWD/subset.csv
+fi
+
+# Find out column numbers for sessions map_ids and epoch. 
+sess_col=$(awk -v RS=',' '/session_id/{print NR; exit}' $hash_list)
+epoch_col=$(awk -v RS=',' '/epoch/{print NR; exit}' $hash_list)
+if [[ $project == 'MAP' ]]; then 
+    id_col=$(awk -v RS=',' '/map_id/{print NR; exit}' $hash_list)
+elif [[ $project == 'TAP' ]]; then 
+    id_col=$(awk -v RS=',' '/vmac_id/{print NR; exit}' $hash_list)
+fi
+
+
+# Read the hash list from the second line (ignore header)
+tail -n +2 $hash_list | while read line
+do
+  id=$(echo $line | awk -v m="$id_col" -F ',' '{print $m}')
+  session=$(echo "$line" | awk -v s="$sess_col" -F ',' '{print $s}')
+  epoch=$(echo "$line" | awk -v e="$epoch_col" -F ',' '{print $e}')
+  if [[ "$epoch" -eq "0" ]] ; then 
+    epoch="BH" 
+  fi
+
+  # Make a folder for each session_id and map_id within
+  mkdir -p "$session"/"$id"
+  cd "$session"/"$id"
+  printf "===========\n"
+  printf "ID: $id , SESSION: $session\n"
+
+  ################
+  ###### T1 ######
+  ################
+
+  # cp -p  /fs0/MAP/PROCESSED/$map/Brain/EPOCH$epoch/LST/*/edits/JEFFERSON*.nii $PWD - old lst 0.1 thresh script
+  session_folder=$("copy_dir"/../"$session")
+  t1_file=$(ls "$session_folder"/"$id"/"$id"*_t1.nii)
+  if [[ -z "$t1_file" ]] ; then 
+	  error "No subject space T1 in LST folder: LST with 0.1 threshold not run? - Removing session\n"
+	  cd "$copy_dir" 
+	  continue
+  else
+	  printf "T1 file: "$t1_file"\n"
+	  cp -p "$session_folder"/"$id"/"$id"*_t1.nii $PWD
+	  mv $PWD/"$id"*_t1.nii T1.nii
+	  gzip T1.nii
+  fi
+
+  #############################
+  ###### WMH edited mask ######
+  #############################
+
+  # Copy over the WMH mask output from LST XNAT pipeline
+  wmh_edited_mask=$(ls "$session_folder"/"$id"/b_000_lesion*flair.nii)
+  if [[ -z "$wmh_edited_mask" ]] ; then
+	  error "No edited WMH lesion mask - Removing session\n"
+	  cd "$copy_dir" 
+	  continue
+  else
+	  printf "Edited WMH mask file: "$wmh_edited_mask"\n"
+	  cp -p  "$wmh_edited_mask" $PWD
+	  mv b_000_lesion*flair.nii  WMH.nii
+	  gzip WMH.nii
+  fi
+
+  
+  ####################################
+  ###### MNI T1 & Segmentations ######
+  ####################################
+  # Copy over T1 and T1 segmentaed in MNI from MultiAtlas
+  # Find and copy their coressponding Multi-Atlas T1 and segmentations 
+  tone_sess_path=$(find /fs0/"$project"/PROCESSED/"$id"/Brain/EPOCH"$epoch"/T1/MULTIATLAS -mindepth 1 -maxdepth 2 -type d -iname "$session")
+  if [[ ! -z "$tone_sess_path" ]]; then
+	  printf "MULTIATLAS path is: "$tone_sess_path" \n"
+          cp -p "$tone_sess_path"/JEFFERSON*_v*/MNI_SEG/* $PWD
+          cp -p "$tone_sess_path"/JEFFERSON*_v*/MNI/* $PWD
+          # Rename T1
+          mv target_processed.nii.gz T1_mni.nii.gz
+  else
+	  error "No multiatlas downloaded for ID "$id" session "$session" \n" >&2
+	  cd "$copy_dir" 
+	  continue
+  fi
+  cd "$copy_dir"
+done
+rm subset.csv
