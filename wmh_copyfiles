@@ -84,7 +84,7 @@ do
   t1_file=$(ls "$session_folder"/"$id"/"$id"*_t1.nii)
   if [[ -z "$t1_file" ]] ; then 
 	  error "No subject space T1 in LST folder: LST with 0.1 threshold not run? - Removing session\n"
-	  cd "$copy_dir" 
+	  cd "$copy_dir" ; rm -r "$session"
 	  continue
   else
 	  printf "T1 file: "$t1_file"\n"
@@ -101,7 +101,7 @@ do
   wmh_edited_mask=$(ls "$session_folder"/"$id"/b_000_lesion*flair.nii)
   if [[ -z "$wmh_edited_mask" ]] ; then
 	  error "No edited WMH lesion mask - Removing session\n"
-	  cd "$copy_dir" 
+	  cd "$copy_dir" ; rm -r "$session
 	  continue
   else
 	  printf "Edited WMH mask file: "$wmh_edited_mask"\n"
@@ -125,7 +125,7 @@ do
           mv target_processed.nii.gz T1_mni.nii.gz
   else
 	  error "No multiatlas downloaded for ID "$id" session "$session" \n" >&2
-	  cd "$copy_dir" 
+	  cd "$copy_dir" ; rm -r "$session
 	  continue
   fi
   cd "$copy_dir"
