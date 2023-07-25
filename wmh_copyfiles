@@ -80,7 +80,7 @@ do
   ################
 
   # cp -p  /fs0/MAP/PROCESSED/$map/Brain/EPOCH$epoch/LST/*/edits/JEFFERSON*.nii $PWD - old lst 0.1 thresh script
-  session_folder=$(/data/h_vmac/workmeister/LST/compare3d2d/3D/"$session")
+  session_folder=/data/h_vmac/workmeister/LST/compare3d2d/3D/"$session"
   t1_file=$(ls "$session_folder"/"$id"/"$id"*_t1.nii)
   if [[ -z "$t1_file" ]] ; then 
 	  error "No subject space T1 in LST folder: LST with 0.1 threshold not run? - Removing session\n"
