@@ -98,25 +98,25 @@ do
   ################
   session_folder=$(find /fs0/"$project"/RAW/"$id"/Brain/EPOCH"$epoch"/FLAIR/ -maxdepth 2 -mindepth 1 -type d -iname "$session")
   if [[ -z "$session_folder" ]]; then
-	error ""$project"/RAW...FLAIR/"$session" folder does not exist\n"
+        error ""$project"/RAW...FLAIR/"$session" folder does not exist\n"
         cd "$copy_dir" ; rm -r "$session"
         continue
   else
-  echo "Session folder: "$session_folder""
-        if [[ "$copy_dir" == */2D/* ]]; then 
-	     flair_nifti=$(ls "$session_folder"/*2DFLAIR*/NIFTI/*.nii.gz)
-        elif [[ "$copy_dir" == */3D/* ]]; then 
-	     flair_nifti=$(ls "$session_folder"/*3DFLAIR*/NIFTI/*.nii.gz)
-	if [[ -z "$t1_nifti" ]]; then
-		error "No FLAIR NIFTI downloaded for "$session"\n"
-		cd "$copy_dir" ; rm -r "$session"
-		continue
-	else
-		cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
-		gunzip $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
-  
-	fi
+      	echo "Session folder: "$session_folder""
+        if [[ "$copy_dir" == */2D ]]; then
+             flair_nifti=$(ls "$session_folder"/*2DFLAIR*/NIFTI/*.nii.gz)
+        elif [[ "$copy_dir" == */3D ]]; then
+             flair_nifti=$(ls "$session_folder"/*3DFLAIR*/NIFTI/*.nii.gz)
+        fi
+	echo "FLAIR folder: "$flair_nifti""
+        if [[ -z "$t1_nifti" ]]; then
+                error "No FLAIR NIFTI downloaded for "$session"\n"
+                cd "$copy_dir" ; rm -r "$session"
+                continue
+        else
+            	cp -p "$flair_nifti" $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
+                gunzip $PWD/"$id"_"$session"_"$epoch"_flair.nii.gz
+        fi
   fi
   cd "$copy_dir"
 done
-rm subset.csv
