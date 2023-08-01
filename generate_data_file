@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+scripts_dir=$PWD
+# Assign variables to tags
+while getopts ":i:p:e:" opt; do
+  case $opt in
+    i)
+      argument=$OPTARG
+      ;;
+    p)
+      project=$OPTARG # Project name , either 3D or 2D
+      ;;
+    e)
+      edit=$OPTARG #Edit status, edited or unedited
+   esac
+done
+
+# Make sure project is something we recognize 
+if [[ $project != '3D' && $project != '2D' ]]; then
+    error "Unrecognized project name "$project" - Use either 3D or 2D\n"
+fi
+
+# Make sure edit is something we recognize 
+if [[ $edit != 'edited' && $project != 'unedited' ]]; then
+    error "Unrecognized edit status "$edit" - Use either edited or unedited\n"
+fi
+
+# Check if the argument is a hash_list or a list of sessions
+if [[ -f $argument ]]; then
+   echo "Input is a hashlist" ;
+   hash_list=$argument
+else
+   echo "Input is not a hashlist"
+   # Generate a sub list from the main Scans acquired hashlist using the sessions provided
+   main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*MAP*ScansAcquired*.csv")
+   head -n 1 "$main_list" > $scripts_dir/subset.csv
+   for i in $argument
+   do
+   cat $main_list | grep -e "$i" >> $scripts_dir/subset.csv
+   done
+   hash_list=$scripts_dir/subset.csv
+fi
+# Find out column numbers for sessions, map_ids and epoch
+sess_col=$(awk -v RS=',' '/session_id/{print NR; exit}' $hash_list)
+epoch_col=$(awk -v RS=',' '/epoch/{print NR; exit}' $hash_list)
+id_col=$(awk -v RS=',' '/map_id/{print NR; exit}' $hash_list)
+
+
+# Read a hash list from the second line (ignore header)
+tail -n +2 $hash_list | while read line
+do
+id=$(echo "$line" | awk -v m="$id_col" -F ',' '{print $m}')
+session=$(echo $line | awk -v s="$sess_col" -F ',' '{print $s}')
+epoch=$(echo $line | awk -v e="$epoch_col" -F ',' '{print $e}')
+
+# Get timestamp 
+current_time=$(date "+%Y%m%d%H%M")
+# Set up sessions paths
+path1=/data/h_vmac/workmeister/LST/compare3d2d/"$project"/wmh_processing/$session/$id/outputs/
+path_to_data="$path1"
+
+cd "$path_to_data"
+mkdir data_file
+# Final upload filename
+echo "map_id = "$id"" >> WMHROI.txt
+echo "session_id = "$session"" >> WMHROI.txt
+echo "scan_type = "$project"" >> WMHROI.txt
+echo "edit_status = "$edit"" >> WMHROI.txt
+grep -v "wml_scan_acquired" WMHROI.txt >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
+done 
+rm "$scripts_dir"/subset.csv
+cd "$scripts_dir"
