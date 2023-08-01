@@ -61,12 +61,12 @@ path_to_data="$path1"
 cd "$path_to_data"
 mkdir data_file
 # Final upload filename
-grep '^wmh' WMHROI.txt >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
-echo "map_id,"$id"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
-echo "session_id,"$session"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
-echo "scan_type,"$project"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
-echo "edit_status,"$edit"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt
-scp "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".txt /data/h_vmac/workmeister/LST/compare3d2d/"$project"/data_files/"$edit"
+grep '^wmh' WMHROI.txt >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv
+echo "map_id,"$id"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv
+echo "session_id,"$session"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv
+echo "scan_type,"$project"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv
+echo "edit_status,"$edit"" >> "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv
+scp "$path_to_data"/data_file/data_file_"$session"_"$id"_lst_"$project"_"$edit"_"$current_time".csv /data/h_vmac/workmeister/LST/compare3d2d/"$project"/data_files/"$edit"
 done 
 rm "$scripts_dir"/subset.csv
 cd "$scripts_dir"
