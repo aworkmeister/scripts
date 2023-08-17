@@ -15,6 +15,13 @@ while getopts ":d:i:n:" opt; do
   esac
 done
 
+if [ "$num" -eq 1 ]; then
+  var=FIRSTCODING
+elif [ "$num" -eq 2 ]; then
+  var=SECONDCODING
+elif [ "$num" -eq 0 ]; then
+  var=RESLICED
+fi
 
 if [[ -f $argument ]]; then
   echo "Input is a hashlist" ;
@@ -36,22 +43,11 @@ epoch_col=$(awk -v RS=',' '/epoch/{print NR; exit}' $hashlist)
 id_col=$(awk -v RS=',' '/map_id/{print NR; exit}' $hashlist)
 
 echo "$id_col"
-tail -n +2 $hashlist | while read line
+tail -n +2 "$hashlist" | while read line
 do
-  id=$(echo $line | awk -v m="$id_col" -F ',' '{print $m}')
-  session=$(echo "$line" | awk -v s="$sess_col" -F ',' '{print $s}')
-  epoch=$(echo "$line" | awk -v e="$epoch_col" -F ',' '{print $e}')
-  if [[ "$epoch" -eq "0" ]] ; then
-    epoch="BH"
-  fi
-
-if [ "$num" -eq 1 ]; then
-  var=FIRSTCODING
-elif [ "$num" -eq 2 ]; then
-  var=SECONDCODING
-elif [ "$num" -eq 0 ]; then
-  var=RESLICED
-fi
+id=$(echo $line | awk -v m="$id_col" -F ',' '{print $m}')
+session=$(echo "$line" | awk -v s="$sess_col" -F ',' '{print $s}')
+epoch=$(echo "$line" | awk -v e="$epoch_col" -F ',' '{print $e}')
 
 path=/fs0/MAP/PROCESSED/"$id"/Brain/EPOCH"$epoch"/VESSELWALL/"$session"/"$var"
 mkdir -p "$path"
@@ -71,5 +67,5 @@ elif [ "$num" -ne 0 ]; then
   cp -rp "$folder"/"$session" "$path"
   # update permissions
   chmod -R 775 "$path"/*
- fi
+fi
 done
