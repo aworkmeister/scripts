@@ -1,39 +1,50 @@
 #!/bin/bash
-# Assign options 
-while getopts ":f:e:n:h:" opt; do
+while getopts ":d:i:n:" opt; do
   case $opt in
-    f)
-      folder=$OPTARG # path to folder containing coded session ids
+    d) 
+      copy_dir=$OPTARG
+      cd "$copy_dir"
+      echo "$PWD"
       ;;
-    e)
-      epoch=$OPTARG # epoch number
+    i) 
+      argument=$OPTARG 
       ;;
     n)
       num=$OPTARG # measurement number (1 or 2; 0 if moving resliced dcms)
       ;;
-    h)
-      hash=$OPTARG # sess_map file
   esac
 done
 
-# Check if the argument is a hash_list or a list of sessions
-if [[ -h $argument ]]; then
+
+if [[ -f $argument ]]; then
   echo "Input is a hashlist" ;
-  hash_list=$argument
+  hashlist="$argument"
 else
-  echo "Input is not a hashlist"
-  echo "$PWD"
-  # Generate a sub list from the main epoch hashlist using the sessions provided
+  echo "Input is not a hashlist" 
+  # Generate a sub list from the main Scans acquired hashlist using the sessions provided
   main_list=$(find /fs0/repos/tools/hash_lists/ -maxdepth 1 -type f -iname "*"MAP"*ScansAcquired*.csv")
-  head -n 1 "$main_list" > subset.csv
+  head -n 1 "$main_list"  > subset.csv
   for i in $argument
     do
-    cat $main_list | grep -e "$i" >> subset.csv #grepping for session id
+    cat $main_list | grep -e "$i" >> subset.csv # Grepping for session id 
     done
-    hash_list=./subset.csv
+    hashlist=./subset.csv
 fi
+# Find out column numbers for sessions, map_ids and epoch 
+sess_col=$(awk -v RS=',' '/session_id/{print NR; exit}' $hashlist)
+epoch_col=$(awk -v RS=',' '/epoch/{print NR; exit}' $hashlist)
+id_col=$(awk -v RS=',' '/map_id/{print NR; exit}' $hashlist)
 
-cd "$folder"
+echo "$id_col"
+tail -n +2 $hashlist | while read line
+do
+  id=$(echo $line | awk -v m="$id_col" -F ',' '{print $m}')
+  session=$(echo "$line" | awk -v s="$sess_col" -F ',' '{print $s}')
+  epoch=$(echo "$line" | awk -v e="$epoch_col" -F ',' '{print $e}')
+  if [[ "$epoch" -eq "0" ]] ; then
+    epoch="BH"
+  fi
+
 if [ "$num" -eq 1 ]; then
   var=FIRSTCODING
 elif [ "$num" -eq 2 ]; then
@@ -42,21 +53,22 @@ elif [ "$num" -eq 0 ]; then
   var=RESLICED
 fi
 
-cat "$hash_list" | while read line; do
- sess=`echo "$line" | awk -F ',' '{print $1}'`
- map=`echo "$line" | awk -F ',' '{print $2}'`
- path=/fs0/MAP/PROCESSED/"$map"/Brain/EPOCH"$epoch"/VESSELWALL/"$sess"/"$var"
- mkdir -p "$path"
- if [ "$num" -eq 0 ]; then
-  cp -p "$folder"/"$sess"/* "$path"
+path=/fs0/MAP/PROCESSED/"$id"/Brain/EPOCH"$epoch"/VESSELWALL/"$session"/"$var"
+mkdir -p "$path"
+if [ "$num" -eq 0 ]; then
+  echo "copying resliced images for "$id""
+  cp -p "$copy_dir"/"$session"/* "$path"
   chmod -R 775 "$path"
- elif [ "$num" -ne 0 ]; then
+elif [ "$num" -ne 0 ]; then
   # copy session_date text files
-  cp -p temp/"$sess"_*.txt "$path"
+  echo "copying measurement session_date text file for "$id""
+  cp -p temp/"$session"_*.txt "$path"
   # copy vwi_session_date text files
-  cp -p temp/vwi_"$sess"_*.txt "$path"
+  echo "copying measurement vwi_session_date text file for "$id""
+  cp -p temp/vwi_"$session"_*.txt "$path"
   # copy dicoms
-  cp -rp "$folder"/"$sess" "$path"
+  echo "copying dicom measurements for "$id""
+  cp -rp "$folder"/"$session" "$path"
   # update permissions
   chmod -R 775 "$path"/*
  fi
