@@ -7,7 +7,7 @@ while getopts ":d:i:n:" opt; do
       echo "$PWD"
       ;;
     i) 
-      argument=$OPTARG 
+      argument=$OPTARG # list of session ids that need moved
       ;;
     n)
       num=$OPTARG # measurement number (1 or 2; 0 if moving resliced dcms)
