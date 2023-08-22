@@ -64,7 +64,7 @@ elif [ "$num" -ne 0 ]; then
   cp -p temp/vwi_"$session"_*.txt "$path"
   # copy dicoms
   echo "copying dicom measurements for "$id""
-  cp -rp "$folder"/"$session" "$path"
+  cp -rp "$copy_dir"/"$session" "$path"
   # update permissions
   chmod -R 775 "$path"/*
 fi
